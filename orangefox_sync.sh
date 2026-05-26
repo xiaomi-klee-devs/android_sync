@@ -243,7 +243,8 @@ patch_minimal_manifest() {
 
       # external/
       local depends="guava gflags";
-      for i in $depends do
+      for i in $depends
+      do
 		if [ ! -d external/$i ]; then
 			echo "** Workaround round #1: cloning $depends ...";
 			git clone --depth=1 $remote_url/external/$i -b $remote_branch external/$i;
@@ -252,7 +253,8 @@ patch_minimal_manifest() {
 
       # hardware/google/
       depends="interfaces pixel";
-      for i in $depends do
+      for i in $depends
+      do
 		if [ ! -d hardware/google/$i ]; then
 			echo "** Workaround round #2: cloning $depends ...";
 			git clone --depth=1 $remote_url/hardware/google/$i -b $remote_branch hardware/google/$i;
