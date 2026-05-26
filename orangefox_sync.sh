@@ -4,8 +4,8 @@
 # - Syncs the relevant twrp minimal manifest, and patches it for building OrangeFox
 # - Pulls in the OrangeFox recovery sources and vendor tree
 # - Author:  DarthJabba9
-# - Version: generic:024
-# - Date:    10 April 2026
+# - Version: generic:025
+# - Date:    26 May 2026
 #
 # 	* Changes for v007 (20220430)  - make it clear that fox_12.1 is not ready
 # 	* Changes for v008 (20220708)  - fox_12.1 is now ready
@@ -25,14 +25,15 @@
 # 	* Changes for v022 (20251106)  - add se_omapi to fox_14.1 branch (*EXPERIMENTAL*)
 # 	* Changes for v023 (20251109)  - patch .repo/manifests/remove-minimal.xml (fox_14.1) to restore gflags (needed for snapuserd)
 # 	* Changes for v024 (20260410)  - fix qcom-common branch issues
+# 	* Changes for v025 (20260526)  - update base version to R12.0; try to work around fox_14.1 manifest patch issues;
 #
 # ***************************************************************************************
 
 # the version number of this script
-SCRIPT_VERSION="20260410";
+SCRIPT_VERSION="20260526";
 
 # the base version of the current OrangeFox
-FOX_BASE_VERSION="R11.3";
+FOX_BASE_VERSION="R12.0";
 
 # Our starting point (Fox base dir)
 BASE_DIR="$PWD";
@@ -124,7 +125,7 @@ Process_CMD_Line() {
                 	shift;
 			if [ "$1" = "14.1" ]; then
 				echo "**************";
-				echo "*** WARNING***: the fox_14.1 branch is *EXPERIMENTAL*! Also, syncing will take a *VERY* long time";
+				echo "*** Syncing will take a *VERY* long time";
 				echo "**************";
 				do_fox_141;
 			elif [ "$1" = "12.1" ]; then
@@ -234,6 +235,29 @@ patch_minimal_manifest() {
       cd $MANIFEST_REPO_MANIFESTS_DIR;
       patch -p1 < $PATCH_REMOVE_MINIMAL;
       [ "$?" = "0" ] && echo "-- The $TWRP_BRANCH .repo/manifests has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH .repo/manifests !";
+
+      # try to catch and work around any issues relating to patching remove-minimal.xml
+      cd $MANIFEST_REPO_MANIFESTS_DIR;
+      local remote_branch=android14-qpr3-release;
+      local remote_url=https://android.googlesource.com/platform;
+
+      # external/
+      local depends= "guava gflags";
+      for i in $depends do
+		if [ ! -d external/$i ]; then
+			echo "** Workaround round #1: cloning $depends ...";
+			git clone --depth=1 $remote_url/external/$i -b $remote_branch external/$i;
+		fi
+      done
+
+      # hardware/google/
+      depends= "interfaces pixel";
+      for i in $depends do
+		if [ ! -d hardware/google/$i ]; then
+			echo "** Workaround round #2: cloning $depends ...";
+			git clone --depth=1 $remote_url/hardware/google/$i -b $remote_branch hardware/google/$i;
+		fi
+      done
    else
       echo "-- Patching the $TWRP_BRANCH system/update_engine for building OrangeFox for native $DEVICE_BRANCH devices ...";
       cd $MANIFEST_UPDATE_ENGINE_DIR;
@@ -389,7 +413,6 @@ test_build() {
    get_device_tree;
 
    # proceed with the test build
-   export FOX_VERSION="$FOX_BASE_VERSION"_"$FOX_DEF_BRANCH";
    export LC_ALL="C";
    export FOX_BUILD_TYPE="Alpha";
    export ALLOW_MISSING_DEPENDENCIES=true;
