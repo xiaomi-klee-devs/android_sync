@@ -246,7 +246,7 @@ patch_minimal_manifest() {
       for i in $depends
       do
 		if [ ! -d external/$i ]; then
-			echo "** Workaround round #1: cloning $depends ...";
+			echo "** Workaround round #1: cloning $i ...";
 			git clone --depth=1 $remote_url/external/$i -b $remote_branch external/$i;
 		fi
       done
@@ -256,7 +256,7 @@ patch_minimal_manifest() {
       for i in $depends
       do
 		if [ ! -d hardware/google/$i ]; then
-			echo "** Workaround round #2: cloning $depends ...";
+			echo "** Workaround round #2: cloning $i ...";
 			git clone --depth=1 $remote_url/hardware/google/$i -b $remote_branch hardware/google/$i;
 		fi
       done
