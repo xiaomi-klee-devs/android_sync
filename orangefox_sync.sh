@@ -4,8 +4,8 @@
 # - Syncs the relevant twrp minimal manifest, and patches it for building OrangeFox
 # - Pulls in the OrangeFox recovery sources and vendor tree
 # - Author:  DarthJabba9
-# - Version: generic:025
-# - Date:    26 May 2026
+# - Version: generic:026
+# - Date:    27 May 2026
 #
 # 	* Changes for v007 (20220430)  - make it clear that fox_12.1 is not ready
 # 	* Changes for v008 (20220708)  - fox_12.1 is now ready
@@ -26,11 +26,12 @@
 # 	* Changes for v023 (20251109)  - patch .repo/manifests/remove-minimal.xml (fox_14.1) to restore gflags (needed for snapuserd)
 # 	* Changes for v024 (20260410)  - fix qcom-common branch issues
 # 	* Changes for v025 (20260526)  - update base version to R12.0; try to work around fox_14.1 manifest patch issues;
+# 	* Changes for v026 (20260527)  - optimise repo sync; optimise fox_14.1 patches
 #
 # ***************************************************************************************
 
 # the version number of this script
-SCRIPT_VERSION="20260526";
+SCRIPT_VERSION="20260527";
 
 # the base version of the current OrangeFox
 FOX_BASE_VERSION="R12.0";
@@ -199,6 +200,11 @@ init_script() {
   }
 }
 
+# try to optimise syncing
+repo_sync() {
+	repo sync --force-sync -c -j$(nproc --all) --no-clone-bundle --no-tags "$@";
+}
+
 # repo init and repo sync
 get_twrp_minimal_manifest() {
   cd $MANIFEST_DIR;
@@ -210,7 +216,7 @@ get_twrp_minimal_manifest() {
   echo "-- Done.";
 
   echo "-- Syncing the $TWRP_BRANCH minimal manifest repo ...";
-  repo sync;
+  repo_sync;
   [ "$?" != "0" ] && {
    abort "-- Failed to Sync the minimal manifest repo. Quitting.";
   }
@@ -237,28 +243,23 @@ patch_minimal_manifest() {
       [ "$?" = "0" ] && echo "-- The $TWRP_BRANCH .repo/manifests has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH .repo/manifests !";
 
       # try to catch and work around any issues relating to patching remove-minimal.xml
-      cd $MANIFEST_REPO_MANIFESTS_DIR;
-      local remote_branch=android14-qpr3-release;
-      local remote_url=https://android.googlesource.com/platform;
+      cd $MANIFEST_DIR/;
+      local remote_branch="android14-qpr3-release";
+      local remote_url="https://android.googlesource.com/platform";
 
-      # external/
-      local depends="guava gflags";
+      # external/ + hardware/google/
+      local depends="external/guava external/gflags hardware/google/interfaces hardware/google/pixel";
+
+      # first try resyncing
+      repo_sync $depends;
+
+      # backup check
       for i in $depends
       do
-		if [ ! -d external/$i ]; then
-			echo "** Workaround round #1: cloning $i ...";
-			git clone --depth=1 $remote_url/external/$i -b $remote_branch external/$i;
-		fi
-      done
-
-      # hardware/google/
-      depends="interfaces pixel";
-      for i in $depends
-      do
-		if [ ! -d hardware/google/$i ]; then
-			echo "** Workaround round #2: cloning $i ...";
-			git clone --depth=1 $remote_url/hardware/google/$i -b $remote_branch hardware/google/$i;
-		fi
+	if [ ! -d $i ]; then
+		echo "** Workaround: cloning $i ...";
+		git clone --depth=1 $remote_url/$i -b $remote_branch $i;
+	fi
       done
    else
       echo "-- Patching the $TWRP_BRANCH system/update_engine for building OrangeFox for native $DEVICE_BRANCH devices ...";
