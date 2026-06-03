@@ -4,8 +4,8 @@
 # - Syncs the relevant twrp minimal manifest, and patches it for building OrangeFox
 # - Pulls in the OrangeFox recovery sources and vendor tree
 # - Author:  DarthJabba9
-# - Version: generic:026
-# - Date:    27 May 2026
+# - Version: generic:027
+# - Date:    03 June 2026
 #
 # 	* Changes for v007 (20220430)  - make it clear that fox_12.1 is not ready
 # 	* Changes for v008 (20220708)  - fox_12.1 is now ready
@@ -27,11 +27,12 @@
 # 	* Changes for v024 (20260410)  - fix qcom-common branch issues
 # 	* Changes for v025 (20260526)  - update base version to R12.0; try to work around fox_14.1 manifest patch issues;
 # 	* Changes for v026 (20260527)  - optimise repo sync; optimise fox_14.1 patches
+# 	* Changes for v027 (20260603)  - patch vendor/twrp to pull in an OrangeFox makefile
 #
 # ***************************************************************************************
 
 # the version number of this script
-SCRIPT_VERSION="20260527";
+SCRIPT_VERSION="20260603";
 
 # the base version of the current OrangeFox
 FOX_BASE_VERSION="R12.0";
@@ -177,6 +178,7 @@ update_environment() {
   PATCH_VOLD="$BASE_DIR/patches/patch-vold-$FOX_DEF_BRANCH.diff";
   PATCH_REMOVE_MINIMAL="$BASE_DIR/patches/patch-remove-minimal-$FOX_DEF_BRANCH.diff";
   PATCH_UPDATE_ENGINE="$BASE_DIR/patches/patch-update-engine-$FOX_DEF_BRANCH.diff";
+  PATCH_VENDOR_TWRP="$BASE_DIR/patch-vendor-twrp-$FOX_DEF_BRANCH.diff";
 
   # the directory in which the patch of the manifest will be executed
   MANIFEST_BUILD_DIR="$MANIFEST_DIR/build";
@@ -186,6 +188,7 @@ update_environment() {
   MANIFEST_VOLD_DIR="$MANIFEST_SYSTEM_DIR/vold";
   MANIFEST_UPDATE_ENGINE_DIR="$MANIFEST_SYSTEM_DIR/update_engine";
   MANIFEST_REPO_MANIFESTS_DIR="$MANIFEST_DIR/.repo/manifests";
+  MANIFEST_VENDOR_TWRP_DIR="$MANIFEST_DIR/vendor/twrp";
 }
 
 # init the script, ensure we have the patch file, and create the manifest directory
@@ -221,6 +224,20 @@ get_twrp_minimal_manifest() {
    abort "-- Failed to Sync the minimal manifest repo. Quitting.";
   }
   echo "-- Done.";
+}
+
+# patch vendor/twrp
+patch_vendor_twrp() {
+	echo "-- Patching the $TWRP_BRANCH vendor/twrp ...";
+	#cd $MANIFEST_VENDOR_TWRP_DIR/;
+	#patch -p1 < $PATCH_VENDOR_TWRP;
+
+	cd $MANIFEST_DIR/;
+	local mkfile="vendor/twrp/config/BoardConfigSoong.mk";
+	local line="include bootable/recovery/orangefox_soong.mk";
+	# insert "line" (if it isn't there already) just before the "SOONG_CONFIG_NAMESPACES += twrpVarsPlugin line"
+	grep -qx "$line" $mkfile || sed -i "/SOONG_CONFIG_NAMESPACES += twrpVarsPlugin/i $line" $mkfile;
+	[ "$?" = "0" ] && echo "-- The $TWRP_BRANCH vendor/twrp has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH vendor/twrp !";
 }
 
 # patch the build system for OrangeFox
@@ -267,6 +284,9 @@ patch_minimal_manifest() {
       patch -p1 < $PATCH_UPDATE_ENGINE;
       [ "$?" = "0" ] && echo "-- The $TWRP_BRANCH system/update_engine has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH system/update_engine !";
    fi
+
+   # patch vendor/twrp
+   patch_vendor_twrp;
 
    # save location of manifest dir
    cd $MANIFEST_DIR/;
