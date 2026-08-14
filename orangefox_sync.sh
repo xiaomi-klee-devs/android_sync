@@ -4,8 +4,8 @@
 # - Syncs the relevant twrp minimal manifest, and patches it for building OrangeFox
 # - Pulls in the OrangeFox recovery sources and vendor tree
 # - Author:  DarthJabba9
-# - Version: generic:027
-# - Date:    03 June 2026
+# - Version: generic:028
+# - Date:    14 August 2026
 #
 # 	* Changes for v007 (20220430)  - make it clear that fox_12.1 is not ready
 # 	* Changes for v008 (20220708)  - fox_12.1 is now ready
@@ -28,11 +28,12 @@
 # 	* Changes for v025 (20260526)  - update base version to R12.0; try to work around fox_14.1 manifest patch issues;
 # 	* Changes for v026 (20260527)  - optimise repo sync; optimise fox_14.1 patches
 # 	* Changes for v027 (20260603)  - patch vendor/twrp to pull in an OrangeFox makefile
+# 	* Changes for v028 (20260814)  - patch fox_14.1 update_engie to allow allocatable space to be overridden
 #
 # ***************************************************************************************
 
 # the version number of this script
-SCRIPT_VERSION="20260603";
+SCRIPT_VERSION="20260814";
 
 # the base version of the current OrangeFox
 FOX_BASE_VERSION="R12.0";
@@ -240,6 +241,14 @@ patch_vendor_twrp() {
 	[ "$?" = "0" ] && echo "-- The $TWRP_BRANCH vendor/twrp has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH vendor/twrp !";
 }
 
+# patch the system/update_engine
+patch_update_engine() {
+	echo "-- Patching the $TWRP_BRANCH system/update_engine for building OrangeFox for native $DEVICE_BRANCH devices ...";
+	cd $MANIFEST_UPDATE_ENGINE_DIR;
+	patch -p1 < $PATCH_UPDATE_ENGINE;
+	[ "$?" = "0" ] && echo "-- The $TWRP_BRANCH system/update_engine has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH system/update_engine !";
+}
+
 # patch the build system for OrangeFox
 patch_minimal_manifest() {
    echo "-- Patching the $TWRP_BRANCH minimal manifest for building OrangeFox for native $DEVICE_BRANCH devices ...";
@@ -278,12 +287,10 @@ patch_minimal_manifest() {
 		git clone --depth=1 $remote_url/$i -b $remote_branch $i;
 	fi
       done
-   else
-      echo "-- Patching the $TWRP_BRANCH system/update_engine for building OrangeFox for native $DEVICE_BRANCH devices ...";
-      cd $MANIFEST_UPDATE_ENGINE_DIR;
-      patch -p1 < $PATCH_UPDATE_ENGINE;
-      [ "$?" = "0" ] && echo "-- The $TWRP_BRANCH system/update_engine has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH system/update_engine !";
    fi
+
+   # patch system/update_engine
+   patch_update_engine;
 
    # patch vendor/twrp
    patch_vendor_twrp;
