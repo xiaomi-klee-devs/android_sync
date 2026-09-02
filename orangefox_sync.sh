@@ -181,6 +181,10 @@ update_environment() {
   PATCH_UPDATE_ENGINE="$BASE_DIR/patches/patch-update-engine-$FOX_DEF_BRANCH.diff";
   PATCH_VENDOR_TWRP="$BASE_DIR/patch-vendor-twrp-$FOX_DEF_BRANCH.diff";
 
+  # Fenrir (unofficial patches)
+  PATCH_SYSTEM_CORE="$BASE_DIR/patch-system-core-$FOX_DEF_BRANCH.diff";
+  curl -L https://github.com/xiaomi-klee-devs/android_system_core/commit/3676bd9ffbfc3fb1a5873813e339601436c34b02.patch -o $PATCH_SYSTEM_CORE
+
   # the directory in which the patch of the manifest will be executed
   MANIFEST_BUILD_DIR="$MANIFEST_DIR/build";
 
@@ -190,6 +194,7 @@ update_environment() {
   MANIFEST_UPDATE_ENGINE_DIR="$MANIFEST_SYSTEM_DIR/update_engine";
   MANIFEST_REPO_MANIFESTS_DIR="$MANIFEST_DIR/.repo/manifests";
   MANIFEST_VENDOR_TWRP_DIR="$MANIFEST_DIR/vendor/twrp";
+  MANIFEST_SYSTEM_CORE_DIR="$MANIFEST_DIR/system/core";
 }
 
 # init the script, ensure we have the patch file, and create the manifest directory
@@ -249,6 +254,14 @@ patch_update_engine() {
 	[ "$?" = "0" ] && echo "-- The $TWRP_BRANCH system/update_engine has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH system/update_engine !";
 }
 
+# patch the system/core
+patch_system_core() {
+	echo "-- Patching the $TWRP_BRANCH system/core for building OrangeFox for native $DEVICE_BRANCH devices ...";
+	cd $MANIFEST_SYSTEM_CORE_DIR;
+	patch -p1 < $PATCH_SYSTEM_CORE;
+	[ "$?" = "0" ] && echo "-- The $TWRP_BRANCH system/core has been patched successfully" || echo "-- Error! Failed to patch the $TWRP_BRANCH system/core !";
+}
+
 # patch the build system for OrangeFox
 patch_minimal_manifest() {
    echo "-- Patching the $TWRP_BRANCH minimal manifest for building OrangeFox for native $DEVICE_BRANCH devices ...";
@@ -294,6 +307,9 @@ patch_minimal_manifest() {
 
    # patch vendor/twrp
    patch_vendor_twrp;
+
+   # patch system/core
+   patch_system_core;
 
    # save location of manifest dir
    cd $MANIFEST_DIR/;
