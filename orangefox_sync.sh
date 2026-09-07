@@ -211,7 +211,7 @@ init_script() {
 
 # try to optimise syncing
 repo_sync() {
-	repo sync --force-sync -c -j4 --no-clone-bundle --no-tags "$@";
+	repo sync --force-sync -c -j16 --no-clone-bundle --no-tags "$@";
 }
 
 # repo init and repo sync
