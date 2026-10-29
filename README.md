@@ -4,53 +4,29 @@
 ------------------------------------
 
 ### 1. Fetch these sync tools ###
-	mkdir ~/OrangeFox_sync
-	cd ~/OrangeFox_sync
-	git clone https://github.com/xiaomi-klee-devs/android_sync.git # (or, using ssh, "git clone git@gitlab.com:OrangeFox/sync.git")
+```
+mkdir ~/OrangeFoxSync
+```
+
+```
+cd ~/OrangeFoxSync
+```
+
+```
+git clone https://github.com/xiaomi-klee-devs/android_sync.git manifest
+```
 
 ### 2. Do the syncing (this can take up to 1-2 hours, and can use up to 40GB-80GB of disk space) - below is an example, for 14.1 (amend as required for other branches) ##
-	cd ~/OrangeFox_sync/sync/
-	./orangefox_sync.sh --branch 14.1 --path ~/fox_14.1
+```
+cd ~/OrangeFoxSync/manifest
+```
+
+```
+./orangefox_sync.sh --branch 14.1 --path ~/fox_14.1
+```
+
 Notes:
 - You *MUST* supply an *ABSOLUTE* path name for the "--path" switch
 - If the sync process gets stuck, you might need to terminate it with Ctrl-C and then run the script again
 - If you want to use ssh for cloning the OrangeFox sources and vendor tree, export "USE_SSH=1" before starting, or supply "--ssh 1" on the command line
 - After the initial sync process, you must then clone your device trees, before you can build for your device
-
-## These manifest branches are supported by the orangefox_sync.sh script: ##
-----------------------------------
-	14.1
-
-## To update the manifest, and the recovery sources, and the vendor trees (given the example of the 14.1 branch above), follow these steps: ##
-----------------------------------
-	cd ~/fox_14.1/
-	repo sync # (ignore all errors and suggestions relating to "android_bootable_recovery")
-	cd ~/fox_14.1/bootable/recovery/
-	git pull
-	cd ~/fox_14.1/vendor/recovery/
-	git pull
-
-## To update only the recovery sources (given the example of the 14.1 branch above), follow these steps: ##
-----------------------------------
-	cd ~/fox_14.1/bootable/recovery/
-	git pull
-
-## To update only the vendor tree (given the example of the 14.1 branch above) follow these steps: ##
-----------------------------------
-	cd ~/fox_14.1/vendor/recovery/
-	git pull
-
-## To update only the manifest (given the example of the 14.1 branch above), follow these steps: ##
-----------------------------------
-	cd ~/fox_14.1/
-	repo sync # (ignore all errors and suggestions relating to "android_bootable_recovery")
-
-## To see the syntax of the orangefox_sync.sh script, follow these steps: ##
-----------------------------------
-	cd ~/OrangeFox_sync/sync/
-	./orangefox_sync.sh --help
-
-
-# For instructions on building OrangeFox, see:
-"https://wiki.orangefox.tech/en/dev/building"
-
